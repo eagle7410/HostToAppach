@@ -1,4 +1,7 @@
 {
-  "name": "application-name",
-  "version": "0.0.1"
+  "name": "Create virtual host",
+  "version": "0.0.1",
+  "dependencies": {
+    "async": "^2.1.2",
+  }
 }
