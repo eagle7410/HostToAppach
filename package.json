@@ -1,5 +1,5 @@
 {
-  "name": "Create virtual host",
+  "name": "CreateVirtualHost",
   "version": "0.0.1",
   "dependencies": {
     "async": "^2.1.2"
