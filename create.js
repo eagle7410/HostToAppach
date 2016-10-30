@@ -6,8 +6,7 @@
 // Modules and utils
 
 let fs = require('fs'),
-	async = require('async'),
-	cmd =require('node-cmd');
+	async = require('async');
 
 // Vars
 
