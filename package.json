@@ -1,5 +1,7 @@
 {
   "name": "CreateVirtualHost",
+  "description" : "CreateVirtualHost",
+  "repository" : "https://github.com/eagle7410/HostToAppach.git",
   "version": "0.0.1",
   "dependencies": {
     "async": "^2.1.2"
