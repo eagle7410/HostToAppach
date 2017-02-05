@@ -37,7 +37,7 @@ async.series([
 		});
 	},
 	(call) => {
-		fs.appendFile('/etc/hosts', `\n 127.0.1.1 ${add} \n`, call);
+		fs.appendFile('/etc/hosts', `\n127.0.0.1 ${add} \n`, call);
 	},
 ], (e) => {
 	if (e) {
@@ -52,13 +52,13 @@ async.series([
 
 let SitesAvailable =  () => {
 	return `
-		<VirtualHost *:80>
-			ServerAdmin admin@example.com
-			ServerName ${add}
-			ServerAlias www.${add}
-			DocumentRoot ${path}
-			ErrorLog \$\{APACHE_LOG_DIR}/error.log
-			CustomLog \$\{APACHE_LOG_DIR}/access.log combined
-		</VirtualHost>
+<VirtualHost *:80>
+	ServerAdmin admin@example.com
+	ServerName ${add}
+	ServerAlias www.${add}
+	DocumentRoot ${path}
+	ErrorLog \$\{APACHE_LOG_DIR}/error.log
+	CustomLog \$\{APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
 	`;
 }
