@@ -10,7 +10,7 @@ let fs = require('fs'),
 
 // Vars
 
-let add = 'ais' || process.env.add,
+let add = process.env.add,
 	path = '/var/www/' + add;
 
 // Code
