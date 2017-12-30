@@ -10,13 +10,13 @@ let fs = require('fs'),
 
 // Vars
 
-let add = process.env.add,
+let add = 'ais' || process.env.add,
 	path = '/var/www/' + add;
 
 // Code
 
 if (!add) {
-	return console.log('Not have host');
+	return console.log('Not have host ' + add);
 }
 
 async.series([
@@ -37,7 +37,7 @@ async.series([
 		});
 	},
 	(call) => {
-		fs.appendFile('/etc/hosts', `\n 127.0.1.1 ${add} \n`, call);
+		fs.appendFile('/etc/hosts', `\n 127.0.0.1 ${add} \n`, call);
 	},
 ], (e) => {
 	if (e) {
@@ -59,6 +59,16 @@ let SitesAvailable =  () => {
 			DocumentRoot ${path}
 			ErrorLog \$\{APACHE_LOG_DIR}/error.log
 			CustomLog \$\{APACHE_LOG_DIR}/access.log combined
+			#for mod rewrite
+			<Directory ${path}>
+				Options -Indexes +FollowSymLinks +MultiViews
+				AllowOverride All
+				Require all granted
+			</Directory>
+			php_value upload_max_filesize 210M
+			php_value post_max_size 220M
+			php_value memory_limit 512M
+			php_value xdebug.remote_enable On
 		</VirtualHost>
 	`;
 }
