@@ -1,74 +1,115 @@
 /**
  * Created by igor on 30.10.16.
+ * Updated by igor on 13.05.18.
  */
 
-"use strict";
-// Modules and utils
+// Require libs, modules, etc...
+const ConsolePrompt   = require('./libs/ConsolePrompt');
+const SudoExec        = require('./libs/SudoExec');
+const ConsoleColorLog = require('console-color');
+const fs              = require('fs');
+const {promisify}     = require('util');
 
-let fs = require('fs'),
-	async = require('async');
+// Init libs, modules, etc...
+const prompt = new ConsolePrompt();
+const sudo   = new SudoExec();
+const log    = new ConsoleColorLog();
+const reader = promisify(fs.readFile);
+const exists = promisify(fs.exists);
+const mkdir  = promisify(fs.mkdir);
 
-// Vars
+const createFolder = async (dir) => {
 
-let add = process.env.add,
-	path = '/var/www/' + add;
+	let has = await exists(dir);
 
-// Code
+	if (has) {
+		log.warn(`${dir} already exists.`);
 
-if (!add) {
-	return console.log('Not have host ' + add);
-}
-
-async.series([
-	(call) => {
-		fs.mkdir(path, (e) => {
-			if (e) {
-				console.log('ERR', e);
-			}
-			call();
-		});
-	},
-	(call) => {
-		fs.writeFile(`/etc/apache2/sites-available/${add}.conf`, SitesAvailable (), (e) => {
-			if (e) {
-				console.log('ERR', e);
-			}
-			call();
-		});
-	},
-	(call) => {
-		fs.appendFile('/etc/hosts', `\n 127.0.0.1 ${add} \n`, call);
-	},
-], (e) => {
-	if (e) {
-	  console.log('ERR ', e);
-
+		return true;
 	}
 
-	console.log(`Finish. \n Enable site with command <<sudo a2ensite ${add}>> \n restart apache2
-	\n Change user folder ${path} `);
+	await mkdir(dir);
 
-});
+	let web = dir + '/web';
 
-let SitesAvailable =  () => {
-	return `
-		<VirtualHost *:80>
-			ServerAdmin admin@example.com
-			ServerName ${add}
-			ServerAlias www.${add}
-			DocumentRoot ${path}
-			ErrorLog \$\{APACHE_LOG_DIR}/error.log
-			CustomLog \$\{APACHE_LOG_DIR}/access.log combined
-			#for mod rewrite
-			<Directory ${path}>
-				Options -Indexes +FollowSymLinks +MultiViews
-				AllowOverride All
-				Require all granted
-			</Directory>
-			php_value upload_max_filesize 210M
-			php_value post_max_size 220M
-			php_value memory_limit 512M
-			php_value xdebug.remote_enable On
-		</VirtualHost>
-	`;
+	has = await exists(web);
+
+	if (!has)  await mkdir(web);
+
+	return true;
+};
+
+const createSitesAvailable = async (host, content) => {
+	const file = '/etc/apache2/sites-available/' + host +'.conf';
+
+	let has = await exists(file);
+
+	if (has) {
+		throw `${file} already exists.`;
+	}
+
+	await sudo.run(['sh', '-c',`echo "${content}" > ${file}`]);
+
+	return true;
+};
+
+const appendToHosts = async (host) => {
+	const hostFile = '/etc/hosts';
+	let hostContent = await reader(hostFile);
+	hostContent = hostContent.toString();
+
+	if (hostContent.includes(`127.0.0.1 ${host}`)) {
+		throw `${host} be include to /ect/hosts.`;
+	}
+
+	await sudo.run(['sh', '-c',`echo "${ `127.0.0.1 ${host}` }" >> ${hostFile}`]);
+
+	return true;
+};
+
+void async function() {
+	try {
+		let host = await prompt.ask('Enter host name');
+		host = host.replace(/[^A-z0-9\-]/g ,'');
+
+		const dir = '/var/www/' + host;
+
+		await createFolder(dir);
+		await createSitesAvailable(host, SitesAvailable(dir, host));
+		await appendToHosts(host);
+
+		await sudo.run(['a2ensite', host]);
+		await sudo.run('/etc/init.d/apache2 restart && ls');
+
+		log.success(`Include virtual host ${host}..OK`);
+
+	} catch (e) {
+		log.error('ERROR \n ', e);
+	}
+
+	process.exit();
+}();
+
+function SitesAvailable (dir, host) {
+	let web = dir + '/web';
+
+	return `<VirtualHost *:80>
+	ServerAdmin admin@example.com
+	ServerName ${host}
+	ServerAlias www.${host}
+	DocumentRoot ${web}
+	ErrorLog ${dir}/error.log
+	CustomLog ${dir}/access.log combined
+	#for mod rewrite
+	<Directory ${web} >
+		Options -Indexes +FollowSymLinks +MultiViews
+		AllowOverride All
+		Require all granted
+	</Directory>
+	php_value upload_max_filesize 210M
+	php_value post_max_size 220M
+	php_value memory_limit 512M
+	php_value xdebug.remote_enable On
+</VirtualHost>`;
 }
+

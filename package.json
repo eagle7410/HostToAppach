@@ -1,9 +1,10 @@
 {
   "name": "CreateVirtualHost",
-  "description" : "CreateVirtualHost",
-  "repository" : "https://github.com/eagle7410/HostToAppach.git",
-  "version": "0.0.2",
+  "description": "CreateVirtualHost",
+  "repository": "https://github.com/eagle7410/HostToAppach.git",
+  "version": "1.0.0",
   "dependencies": {
-    "async": "^2.1.2"
+    "console-color": "git+https://github.com/eagle7410/console-color.git",
+    "sudo": "1.0.3"
   }
 }
